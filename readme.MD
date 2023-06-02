@@ -1,1 +1,1 @@
-This project was built using hardhat
+This is a multi-sig wallet
