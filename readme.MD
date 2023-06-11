@@ -1,1 +1,1 @@
-This is a multi-sig wallet
+# Multi-sig Wallet
