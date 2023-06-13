@@ -21,7 +21,7 @@ function App() {
   })
 
   useEffect(()=>{
-    if(!isWeb3Enabled || CHAIN_ID !== parseInt(chainId)) return
+    if(!isWeb3Enabled || CHAIN_ID !== parseInt(chainId)) return setIsWalletOwner(false)
 
     async function gettingOwners(){
       await getOwners({

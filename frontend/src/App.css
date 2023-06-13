@@ -30,6 +30,8 @@ body{
   height: 600px;
   background-color: var(--color-yellow-main);
   display: flex;
+  flex-direction: column;
+  row-gap: 10px;
   justify-content: center;
   align-items: center;
 }
