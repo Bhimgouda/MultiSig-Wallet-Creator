@@ -14,6 +14,8 @@ contract MultiSigWallet {
     mapping(uint256 => mapping(address => bool)) private approvals;
     address[] private owners;
     mapping(address => bool) private isOwner;
+    uint256 timelock;
+    mapping(uint256 => uint256) private timeToEndLock;
 
     event Deposit(address indexed sender, uint256 amount);
     event Submit(uint256 indexed txId);
@@ -21,14 +23,16 @@ contract MultiSigWallet {
     event Revoke(address indexed owner, uint256 indexed txId);
     event Execute(uint256 indexed txId);
 
-    constructor(uint256 _requiredApprovals, address[] memory _owners) {
+    constructor(
+        address[] memory _owners,
+        uint256 _requiredApprovals,
+        uint256 _timelock
+    ) {
         require(_owners.length > 0, "No owners");
         require(
             _requiredApprovals > 0 && _requiredApprovals <= _owners.length,
             "Invalid required owner signatures"
         );
-
-        requiredApprovals = _requiredApprovals;
 
         for (uint256 i; i < _owners.length; i++) {
             require(_owners[i] != address(0), "Invalid owner address");
@@ -37,6 +41,9 @@ contract MultiSigWallet {
             isOwner[_owners[i]] = true;
             owners.push(_owners[i]);
         }
+
+        requiredApprovals = _requiredApprovals;
+        timelock = _timelock;
     }
 
     modifier onlyOwner() {
@@ -59,10 +66,14 @@ contract MultiSigWallet {
         _;
     }
 
-    function approvalsCount(uint _txId) public view returns (uint count) {
-        for (uint i; i < owners.length; i++) {
+    function approvalsCount(uint256 _txId) public view returns (uint256 count) {
+        for (uint256 i; i < owners.length; i++) {
             count += approvals[_txId][owners[i]] ? 1 : 0;
         }
+    }
+
+    function setTimeLock(uint _txId) private {
+        timeToEndLock[_txId] = block.timestamp + (timelock * 1 seconds);
     }
 
     receive() external payable {
@@ -89,6 +100,7 @@ contract MultiSigWallet {
         isNotExecuted(_txId)
     {
         approvals[_txId][msg.sender] = true;
+        if (approvalsCount(_txId) >= requiredApprovals) {}
         emit Approve(msg.sender, _txId);
     }
 
@@ -98,6 +110,11 @@ contract MultiSigWallet {
         require(
             approvalsCount(_txId) >= requiredApprovals,
             "Is not approved by required members"
+        );
+
+        require(
+            timeToEndLock[_txId] <= block.timestamp,
+            "Timelock has not ended"
         );
 
         Transaction storage transaction = transactions[_txId];
@@ -121,7 +138,7 @@ contract MultiSigWallet {
     /////// GETTERS ////////
     ///////////////////////
 
-    function getRequiredApprovals() external view returns (uint) {
+    function getRequiredApprovals() external view returns (uint256) {
         return requiredApprovals;
     }
 
@@ -131,5 +148,9 @@ contract MultiSigWallet {
 
     function getAllTransactions() external view returns (Transaction[] memory) {
         return transactions;
+    }
+
+    function getTimeLock() external view returns (uint256) {
+        return timelock;
     }
 }
