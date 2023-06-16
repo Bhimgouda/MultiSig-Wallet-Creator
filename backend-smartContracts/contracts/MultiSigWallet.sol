@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.8;
+import "hardhat/console.sol";
 
 contract MultiSigWallet {
     struct Transaction {
@@ -80,6 +81,10 @@ contract MultiSigWallet {
         emit Deposit(msg.sender, msg.value);
     }
 
+    function deposit() external payable {
+        emit Deposit(msg.sender, msg.value);
+    }
+
     function submit(
         address _to,
         uint256 value,
@@ -123,6 +128,7 @@ contract MultiSigWallet {
         (bool success, ) = payable(transaction.to).call{
             value: transaction.value
         }(transaction.data);
+        console.log(address(this).balance);
         require(success, "Tx Failed");
         emit Execute(_txId);
     }
@@ -146,11 +152,19 @@ contract MultiSigWallet {
         return owners;
     }
 
+    function checkIfApproved(uint _txId) external view returns (bool) {
+        return approvals[_txId][msg.sender];
+    }
+
     function getAllTransactions() external view returns (Transaction[] memory) {
         return transactions;
     }
 
     function getTimeLock() external view returns (uint256) {
         return timelock;
+    }
+
+    function getBalance() public view returns (uint) {
+        return address(this).balance;
     }
 }

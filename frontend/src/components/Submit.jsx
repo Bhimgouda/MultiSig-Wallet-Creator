@@ -1,20 +1,19 @@
 import { useMoralis, useWeb3Contract } from "react-moralis";
-import {ethers} from "ethers"
-import MULTI_SIG_WALLET_ABI from "../constants/contractAbi.json"
-import MULTI_SIG_WALLET_ADDRESSES from "../constants/contractAddresses.json"
+import {ethers, parseEther} from "ethers"
+import MULTI_SIG_WALLET_ABI from "../constants/walletAbi.json"
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
-const CHAIN_ID = 31337;
-const MULTI_SIG_WALLET_ADDRESS = MULTI_SIG_WALLET_ADDRESSES[CHAIN_ID]["MultiSigWallet"]
-
-const Sumbit = () => {
+const Sumbit = ({walletAddress}) => {
     const [isContract, setIsContract] = useState();
-    const [address, setAddress] = useState();
-    const [value, setValue] = useState();
+    const [address, setAddress] = useState("");
+    const [value, setValue] = useState(0);
     const [callData, setCallData] = useState("0x");
 
-    const validateAddress = async(e)=>{
+    const onAddressChange = async(e)=>{
         const address = e.target.value;
+        setAddress(address)
+
         if(address.length !== 42) return;
         const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/"); // changes on production
         const code = await provider.getCode(address)
@@ -23,30 +22,51 @@ const Sumbit = () => {
         else setIsContract(true)
     }
 
+    const handleValueChange = (e)=>{
+        setValue(e.target.value)
+    }
+
+    const handleCallDataChange = (e)=>{
+        setCallData(e.target.value)
+    }
+
     const {runContractFunction: submitTransaction} = useWeb3Contract({
-        contractAddress: MULTI_SIG_WALLET_ADDRESS,
+        contractAddress: walletAddress,
         abi: MULTI_SIG_WALLET_ABI,
         functionName: "submit",
         params: {
             _to: address,
-            value,
-            callData
+            value: parseEther(value.toString() || "0"),
+            _data: callData
         }
     })
 
-    return ( 
-    <form onSubmit={()=>{
-        submitTransaction({
-            onSuccess: (data)=>{
-                console.log(data)
-            },
-            onError: (e)=>console.log(e)
+    const handleSubmitTransaction = async(e)=>{
+        e.preventDefault()
+        await submitTransaction({
+            onSuccess: handleSubmitSuccess,
+            onError: (e)=>toast.error(e.message, {position: "top-right"})
         })
-    }}>
-        <input placeholder="address" onChange={validateAddress} name="address" type="text"/>
-        {isContract === false ? 
-            <div>
-                <input type="number" name="value" placeholder="value" />
+    }
+
+    const handleSubmitSuccess = async(tx)=>{
+        toast("Submitting Your Transaction", {position: "top-right"})
+        const receipt = await tx.wait(1)
+        const txId = parseInt(receipt.events[0].args.txId)
+        toast.success(`Your Transcation is submitted with TxId - ${txId}`, {position: "top-right"})
+    }
+
+    return ( 
+    <form onSubmit={handleSubmitTransaction}>
+        <div>
+            <input placeholder="address" value={address} onChange={onAddressChange} name="address" type="text"/>
+        </div>
+        <div>
+            <input type="number" value={value} onChange={handleValueChange} name="value" placeholder="value" />
+        </div>
+        {isContract === true ? 
+            <div className="data">
+                <input type="text" name='data' value={callData} onChange={handleCallDataChange} placeholder="data" />
             </div>
             :
             null

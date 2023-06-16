@@ -10,7 +10,9 @@
     "moralis": "^2.22.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.4.1",
     "react-moralis": "^1.4.2",
+    "react-router-dom": "^6.13.0",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4",
     "web3uikit": "^1.0.4"

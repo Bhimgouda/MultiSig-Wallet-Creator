@@ -46,7 +46,7 @@ module.exports = {
       url: SEPOLIA_RPC_URL,
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
       saveDeployments: true,
-      chainId: 11155111,
+      chainId: 31337,
       blockConfirmations: 5
     },
     mainnet:{

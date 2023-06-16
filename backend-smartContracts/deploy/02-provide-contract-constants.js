@@ -5,39 +5,38 @@ module.exports = async function() {
     if(process.env.UPDATE_CONTRACT_DATA){
         console.log("Updating abi's and addresses in required places>>>>>>>")
         const MultiSigWallet = await ethers.getContract("MultiSigWallet")
-        await updateAbi(MultiSigWallet);
-        await updateContractAddresses(MultiSigWallet)
+        const MultiSigFactory = await ethers.getContract("MultiSigFactory")
+
+        await updateAbi(MultiSigWallet, "../frontend/src/constants/walletAbi.json")
+
+        await updateAbi(MultiSigFactory, "../frontend/src/constants/walletFactoryAbi.json")
+        await updateContractAddresses(MultiSigFactory, "../frontend/src/constants/walletFactoryAddresses.json")
+
         console.log("Updated abi's and addresses.........")
     }
 }
 
-const ADDRESSES_FILES = ["../frontend/src/constants/contractAddresses.json"]
-const ABI_FILES = ["../frontend/src/constants/contractAbi.json"]
-
-async function updateAbi(contract) {
+async function updateAbi(contract, file) {
     // Getting the abi
     const abi = contract.interface.format(ethers.utils.FormatTypes.json)
 
     // Writing the new abi to the file
-    ABI_FILES.forEach(FILE=>fs.writeFileSync(FILE, abi))
+    fs.writeFileSync(file, abi)
 }
 
-async function updateContractAddresses(contract){
+async function updateContractAddresses(contract, file){
     
     const chainId = network.config.chainId.toString()
     
-    const contractAddresses = JSON.parse(fs.readFileSync(ADDRESSES_FILES[0], "utf8"))
+    const contractAddresses = JSON.parse(fs.readFileSync(file, "utf8"))
     
     if(contractAddresses[chainId]){
-        contractAddresses[chainId]["MultiSigWallet"] = contract.address
+        contractAddresses[chainId] = contract.address
     }
     else {
-        contractAddresses[chainId] = {
-            "MultiSigWallet": contract.address
-        }
+        contractAddresses[chainId] = contract.address
     }
     
-    ADDRESSES_FILES.forEach(FILE=>{
-    fs.writeFileSync(FILE, JSON.stringify(contractAddresses))
-    })
+    fs.writeFileSync(file, JSON.stringify(contractAddresses))
+
 }

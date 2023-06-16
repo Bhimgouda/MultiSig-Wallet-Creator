@@ -8,9 +8,16 @@ module.exports = async ({getNamedAccounts, deployments}) => {
     const {deploy, log, get} = deployments
     const {deployer} = await getNamedAccounts()
 
+    const MultiSigFactory =  await deploy("MultiSigFactory", {
+        from: deployer,
+        log: true,
+        waitConfirmations: network.config.blockConfirmations || 1
+    })
+
     const requiredApprovals = 2
     const owners = ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"]
-    const args = [requiredApprovals, owners]
+    const timelock = 21
+    const args = [owners, requiredApprovals, timelock]
 
     const MultiSigWallet = await deploy("MultiSigWallet", {
         from: deployer,
@@ -22,7 +29,7 @@ module.exports = async ({getNamedAccounts, deployments}) => {
     // Verify the deployment
     if(!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY){
     log("Verifying...")
-    await verify(MultiSigWallet.address, args);
+    await verify(MultiSigFactory.address);
     }
     log("--------------------------------------")
 }
