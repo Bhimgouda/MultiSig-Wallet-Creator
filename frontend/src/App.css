@@ -4,8 +4,36 @@
   box-sizing: border-box;
 }
 
+@font-face {
+  font-family: "Satoshi-Medium";
+  src: url("../public/fonts/Satoshi-Medium.woff2") format("woff2"),
+    url("../public/fonts/Satoshi-Medium.woff") format("woff");
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Satoshi-Black";
+  src: url("../public/fonts/Satoshi-Black.woff2") format("woff2"),
+    url("../public/fonts/Satoshi-Black.woff") format("woff");
+  font-weight: 900;
+  font-display: swap;
+  font-style: normal;
+}
+
 :root{
   --color-yellow-main: #fb0;
+  --color-yellow-light: #fea;
+  --color-grey: #f5f5f5;
+  --color-black: #000;
+  --color-light-black: #444;
+
+  --font-Satoshi-Black: "Satoshi-Black", sans-serif;
+  --font-poppins: "Poppins", sans-serif;
+  --font-satoshi-regular: "Satoshi-Medium", sans-serif;
+
+  /*  (black with 75% opacity for lightbox background) */
 }
 
 img{
@@ -14,13 +42,103 @@ img{
 
 body{
   margin: 0;
+  font-family: var(--font-satoshi-regular);
 }
 
-.btn{
+input{
   padding: 10px;
+  border-radius: 4px;
+  border: none;
+  margin: 5px 0;
+  width: 0;
+  flex-grow: 1;
+  font-family: var(--font-satoshi-regular);
+}
+
+input:focus{
+  outline: none;
+}
+
+h1,h2,h3{
+  margin: 5px 0;
+  text-align: center;
+}
+
+p{
+  margin: 0;
+}
+
+.container{
+  width: 100%;
+}
+
+form{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+form div{
+  width: 100%;
+  display: flex;
+}
+
+/* Text */
+
+.text--yellow{
+  color: var(--color-yellow-main)
+}
+
+/* Buttons */
+
+.btn{
+  padding: 10px 15px;
   border: 1px solid black;
   border-radius: 4px;
   cursor: pointer;
+  font-family: var(--font-satoshi-regular);
+  font-size: 16px;
+}
+
+.btn--full{
+  width: 100%;
+}
+
+.btn--yellow{
+  background: var(--color-yellow-main)
+}
+
+.btn--small{
+  font-size: 14px;
+  padding: 7px 10px;
+  border-radius: 3px;
+}
+
+/* Icon */
+
+.icon{
+  width: 20px;
+  height: 20px;
+}
+
+.icon--copy{
+  margin-right: 5px;
+  position: relative;
+  top: 4px;
+}
+
+.address{
+  border: 1px solid var(--color-yellow-main);
+  padding: 5px 10px;
+  border-radius: 6px;
+}
+
+.address:hover{
+  cursor: pointer;
+  color: var(--color-light-black);
+  border: 1px solid var(--color-yellow-light);
 }
 
 .header{
@@ -38,15 +156,68 @@ body{
   height: 100vh
 }
 
-.wallet{
-  margin-top: 20px;
+/* Create Wallet */
+
+.create-wallet{
+  background-color: var(--color-grey);
   padding: 50px;
-  /* width: 350px;
-  height: 600px; */
-  background-color: var(--color-yellow-main);
   display: flex;
   flex-direction: column;
-  row-gap: 10px;
   justify-content: center;
   align-items: center;
+  border-radius: 10px;
+  row-gap: 70px
+}
+
+.wallet{
+  margin-top: 20px;
+  padding: 25px;
+  width: 450px;
+  height: 650px;
+  background-color: var(--color-grey);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  row-gap: 10px;
+  border-radius: 12px;
+}
+
+.wallet__mid{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 10px;
+}
+
+.wallet__deposit{
+  border: 1px solid var(--color-yellow-main);
+  padding: 15px;
+  border-radius: 10px
+}
+
+.wallet__submit{
+  margin-top: 40px;
+}
+
+.wallet__transactions{
+  margin-top: 40px;
+}
+
+
+/* Wallet__Transcations */
+
+.wallet__transactions{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  row-gap: 20px;
+  width: 100%;
+}
+
+.transaction{
+  display: grid;
+  grid-template-columns: 5% 15% 25% 15% 40%;
+  width: 100%;
+  justify-items: center;
 }

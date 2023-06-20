@@ -160,6 +160,12 @@ contract MultiSigWallet {
         return transactions;
     }
 
+    function getTransaction(
+        uint256 _txId
+    ) external view returns (Transaction memory) {
+        return transactions[_txId];
+    }
+
     function getTimeLock() external view returns (uint256) {
         return timelock;
     }

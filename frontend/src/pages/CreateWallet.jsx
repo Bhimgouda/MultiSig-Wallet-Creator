@@ -3,6 +3,8 @@ import { useMoralis, useWeb3Contract } from "react-moralis";
 import { Link, useNavigate } from "react-router-dom";
 import WALLET_FACTORY_ABI from "../constants/walletFactoryAbi.json"
 import WALLET_FACTORY_ADDRESSES from "../constants/walletFactoryAddresses.json"
+import truncateStr from "../utils/truncate";
+import { error } from "../utils/toastWrapper";
 
 const CreateWallet = ({CHAIN_ID}) => {
   const [owners, setOwners] = useState([""]);
@@ -11,7 +13,7 @@ const CreateWallet = ({CHAIN_ID}) => {
   const [recentWallet, setRecentWallet] = useState("")
   const navigate = useNavigate();
 
-  const {runContractFunction: createWallet, waitForTransaction} = useWeb3Contract({
+  const {runContractFunction: createWallet} = useWeb3Contract({
     contractAddress: WALLET_FACTORY_ADDRESSES[CHAIN_ID],
     abi: WALLET_FACTORY_ABI,
     params: {_owners: owners, required, timelock},
@@ -47,15 +49,17 @@ const CreateWallet = ({CHAIN_ID}) => {
 
   const handleCreateWallet = async (e) => {
     e.preventDefault();
-    const required = e.target.required.value;
+
+    if(!required)
+      return error("Required Approvals cannot be 0")
     if (required > owners.length)
-      return alert("Required Approvals should be less than number of owners");
+      return error("Required Approvals should be less than number of owners");
     if(!owners.every(owner=> owner.length === 42))
-      return alert ("Invalid owner address")
+      return error("Invalid owner address")
     
     await createWallet({
         onSuccess: handleCreateWalletSuccess,
-        onError: (e)=>alert(e)
+        onError: (e)=>error(e.message)
     });
   };
 
@@ -70,23 +74,25 @@ const CreateWallet = ({CHAIN_ID}) => {
     e.preventDefault();
     const walletAddress = e.target.walletAddress.value;
     if (walletAddress.length !== 42)
-      return alert("Invalid MultiSig Wallet Address");
+      return error("Invalid MultiSig Wallet Address");
     navigate(`/wallet/${walletAddress}`);
   };
 
   return (
     <div className="create-wallet">
-      <form onSubmit={handleCreateWallet}>
+      <div className="container">
+      <h1 style={{marginBottom: "21px"}}>Create <span className="text--yellow">MultiSig</span> Wallet</h1>
+      <form className="create-wallet--new" onSubmit={handleCreateWallet}>
         {owners.map((owner, index) => (
-          <div key={index}>
+          <div style={{display: "flex", alignItems: "center"}} key={index}>
             <input
               type="text"
               placeholder="address"
               value={owner.address}
               onChange={(e) => handleOwnerChange(index, e.target.value)}
             />
-            <span className="btn" onClick={addOwners}>plus</span>
-            <span className="btn" onClick={() => removeOwner(index)}>minus</span>
+            <span className="icon" style={{width: "14px", margin: "7px"}} onClick={addOwners}><img src="/icons/plus.svg" alt="" /></span>
+            <span className="icon" onClick={() => removeOwner(index)}><img src="/icons/minus.svg" alt="" /></span>
           </div>
         ))}
         <div>
@@ -95,21 +101,28 @@ const CreateWallet = ({CHAIN_ID}) => {
         <div>
           <input value={timelock} onChange={handleTimelockChange} type="number" name="timelock" placeholder="Timelock" id="timelock" />
         </div>
-        <button>Create New Wallet</button>
+        <button className="btn btn--yellow">Create New Wallet</button>
       </form>
-      <form onSubmit={redirectToExistingWallet}>
-        <input type="text" name="walletAddress" />
-        <button>Interact with an Existing Multisig Wallet</button>
+      </div>
+
+      <form className="create-wallet--existing" onSubmit={redirectToExistingWallet}>
+        <h3 className="">Interact with an Existing MultiSig Wallet</h3>
+        <div>
+          <input type="text" placeholder="wallet address" name="walletAddress" />
+          <button className="btn btn--small">Interact</button>
+        </div>
       </form>
       
       {recentWallet ? (
-          <div>
-            <h3>Your Most Recent Wallet</h3>
-            <span>{recentWallet}</span>
+        <div className="container">
+          <h3>Your Most Recent Wallet</h3>
+          <div className="container" style={{ marginTop: "10px",display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+            <span>{truncateStr(recentWallet, 21)}</span>
             <Link to={`/wallet/${recentWallet}`}>
-              <button>Interact</button>
+              <button className="btn btn--small">Interact</button>
             </Link>
           </div>
+        </div>
         )
       :
       null

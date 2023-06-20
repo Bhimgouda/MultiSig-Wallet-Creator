@@ -3,8 +3,9 @@ import {ethers, parseEther} from "ethers"
 import MULTI_SIG_WALLET_ABI from "../constants/walletAbi.json"
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { error, info, success } from "../utils/toastWrapper";
 
-const Sumbit = ({walletAddress}) => {
+const Sumbit = ({walletAddress, handleSubmitted}) => {
     const [isContract, setIsContract] = useState();
     const [address, setAddress] = useState("");
     const [value, setValue] = useState(0);
@@ -45,34 +46,37 @@ const Sumbit = ({walletAddress}) => {
         e.preventDefault()
         await submitTransaction({
             onSuccess: handleSubmitSuccess,
-            onError: (e)=>toast.error(e.message, {position: "top-right"})
+            onError: (e)=>console.log(e)
         })
     }
 
     const handleSubmitSuccess = async(tx)=>{
-        toast("Submitting Your Transaction", {position: "top-right"})
+        info("Submitting Your Transaction")
         const receipt = await tx.wait(1)
         const txId = parseInt(receipt.events[0].args.txId)
-        toast.success(`Your Transcation is submitted with TxId - ${txId}`, {position: "top-right"})
+        success(`Your Transcation is submitted with TxId - ${txId}`)
+        handleSubmitted(txId)
     }
 
     return ( 
-    <form onSubmit={handleSubmitTransaction}>
-        <div>
-            <input placeholder="address" value={address} onChange={onAddressChange} name="address" type="text"/>
+        <div className="wallet__submit container">
+            <form className="container" onSubmit={handleSubmitTransaction}>
+                {/* <div>
+                    <input placeholder="address" value={address} onChange={onAddressChange} name="address" type="text"/>
+                </div>
+                <div>
+                    <input type="number" value={value} onChange={handleValueChange} name="value" placeholder="value" />
+                </div>
+                {isContract === true ? 
+                    <div className="data">
+                        <input type="text" name='data' value={callData} onChange={handleCallDataChange} placeholder="data" />
+                    </div>
+                    :
+                    null
+                } */}
+                <button className="btn btn--full btn--yellow">Submit</button>
+            </form>
         </div>
-        <div>
-            <input type="number" value={value} onChange={handleValueChange} name="value" placeholder="value" />
-        </div>
-        {isContract === true ? 
-            <div className="data">
-                <input type="text" name='data' value={callData} onChange={handleCallDataChange} placeholder="data" />
-            </div>
-            :
-            null
-        }
-        <button>SUBMIT</button>
-    </form>
     );
 }
  

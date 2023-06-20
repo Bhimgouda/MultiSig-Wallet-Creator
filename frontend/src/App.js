@@ -25,7 +25,7 @@ function App() {
             (<Routes>
             <Route path="/" element={<CreateWallet CHAIN_ID={CHAIN_ID}/>}/>
             <Route path="/wallet/:address" element={<Wallet CHAIN_ID={CHAIN_ID}/>}/>
-            <Route path="*" element={<CreateWallet CHAIN_ID={CHAIN_ID}/>}/>
+            {/* <Route path="*" element={<CreateWallet CHAIN_ID={CHAIN_ID}/>}/> */}
             </Routes>)
             : <h2 className="notice">Please Switch to Polygon network</h2>
           :

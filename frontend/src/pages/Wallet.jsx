@@ -2,18 +2,38 @@ import { useMoralis, useWeb3Contract } from 'react-moralis';
 import MULTI_SIG_WALLET_ABI from "../constants/walletAbi.json"
 import WALLET_FACTORY_ABI from "../constants/walletFactoryAbi.json"
 import WALLET_FACTORY_ADDRESSES from "../constants/walletFactoryAddresses.json"
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Deposit from '../components/Deposit';
 import { parseEther } from 'ethers';
 import toast from 'react-hot-toast';
 import Sumbit from '../components/Submit';
 import Transactions from '../components/Transactions.jsx'
+import { error } from '../utils/toastWrapper';
+import truncateStr from '../utils/truncate';
+import Owners from '../components/Owners';
 
 const Wallet = ({CHAIN_ID}) => {
     const {account} = useMoralis()
     const [isWalletOwner, setIsWalletOwner] = useState();
-    const [submitOpen, setSubmitOpen] = useState(false)
+    // const [submitOpen, setSubmitOpen] = useState(false)
+    const [submitted, setSubmitted] = useState();
+    const walletAddressRef = useRef(null);
+
+    const handleSubmitted = (txID)=>{
+        setSubmitted(txID);
+    }
+
+    const handleCopyClick = () => {
+        if (walletAddressRef.current) {
+          const range = document.createRange();
+          range.selectNode(walletAddressRef.current);
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(range);
+          document.execCommand('copy');
+          window.getSelection().removeAllRanges();
+        }
+    };
 
     const navigate = useNavigate()
     const {address: walletAddress}= useParams()
@@ -48,13 +68,12 @@ const Wallet = ({CHAIN_ID}) => {
         await walletExists({
             onSuccess: (data)=>{
                 if(!data){
-                    // Alert
-                    console.log("MultiSig Wallet doesn't exist with US")
+                    error("MultiSig Wallet doesn't exist with US")
                     return navigate("/")
                 }
             },
             onError: (e)=> {
-                // Alert
+                error(e.message)
                 return navigate("/")
             }
         })
@@ -69,7 +88,7 @@ const Wallet = ({CHAIN_ID}) => {
             }
             else setIsWalletOwner(false)
           },
-          onError: (e)=>console.log(e)
+          onError: (e)=>error(e.message)
         })
     }
 
@@ -78,11 +97,20 @@ const Wallet = ({CHAIN_ID}) => {
         {
             isWalletOwner ? 
             <div className="wallet">
-                <p>{walletAddress}</p>
-                <Deposit walletAddress={walletAddress} />
+                <div>
+                {/* <span>Copy your multi-sig wallet address**</span> */}
+                <p ref={walletAddressRef} onClick={handleCopyClick} style={{fontSize: "14px", marginBottom: "10px"}} className='address'>
+                    <img className='icon icon--copy' src="/icons/copy.svg" alt="" />
+                    {walletAddress}
+                </p>
+                </div>
+                <div className='container wallet__mid'>
+                    <Owners />
+                    <Deposit walletAddress={walletAddress} />
+                </div>
                 {/* <button onClick={} className='btn'>Submit A Transaction</button> */}
-                <Sumbit CHAIN_ID={CHAIN_ID} walletAddress={walletAddress}/>
-                <Transactions walletAddress={walletAddress}/>
+                <Sumbit handleSubmitted={handleSubmitted} CHAIN_ID={CHAIN_ID} walletAddress={walletAddress}/>
+                <Transactions submitted={submitted} walletAddress={walletAddress}/>
             </div>
             : 
             <p style={{marginTop: "20px", fontSize: "21px"}}>This wallet can only be accessed by it's owners</p>

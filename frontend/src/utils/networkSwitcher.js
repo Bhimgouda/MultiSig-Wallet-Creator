@@ -1,3 +1,5 @@
+import { success } from "./toastWrapper";
+
 const handleNetworkSwitch = async (isWeb3Enabled, chainId, web3, CHAIN_ID) => {
     // Enable Web3 if not already enabled
     if (!isWeb3Enabled) {
@@ -6,9 +8,7 @@ const handleNetworkSwitch = async (isWeb3Enabled, chainId, web3, CHAIN_ID) => {
 
     // Check if the current network is already Polygon
     if (parseInt(chainId) === CHAIN_ID) {
-    //   toast.success("Already connected to Polygon network", ({
-    //     "position": "top-right"
-    //   }));
+      success("You're wallet is connected to Polygon network")
       return;
     }
 
