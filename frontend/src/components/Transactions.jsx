@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { useMoralis, useWeb3Contract } from "react-moralis";
 import MULTI_SIG_WALLET_ABI from "../constants/walletAbi.json"
-import { ethers, formatEther } from "ethers";
-import { toast } from "react-hot-toast";
+import { formatEther } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
 import truncateStr from "../utils/truncate";
 import {error, info} from "../utils/toastWrapper"
 
-const Transactions = ({walletAddress, submitted}) => {
+const Transactions = ({walletAddress, submitted, handleLoading, updateBalance, balance}) => {
     const [transactions, setTransactions] = useState([])
     const {account} = useMoralis()
     const [requiredApprovals, setRequiredApprovals] = useState(0)
@@ -22,7 +21,7 @@ const Transactions = ({walletAddress, submitted}) => {
     useEffect(()=>{
         getAllTransactions()
         getRequiredApprovals()
-    },[account])
+    },[account, requiredApprovals])
 
     useEffect(()=>{
         if(submitted === undefined) return
@@ -42,9 +41,7 @@ const Transactions = ({walletAddress, submitted}) => {
                 transactions.push({...txn, approved, approvals})
             }
         }
-
         setTransactions(transactions)
-
     }
     async function getApprovalsCount(_txId){
         const params = {...walletFunctionParams, functionName: "approvalsCount", params:{_txId}}
@@ -71,31 +68,46 @@ const Transactions = ({walletAddress, submitted}) => {
 
     const handleExecute = async (_txId)=>{
         const params = {...walletFunctionParams, functionName: "execute", params: {_txId}}
+        if(balance < formatEther(BigNumber.from(transactions[_txId].value).toString())) return error('Insufficient balance in your multi-sig wallet')
+        handleLoading(true)
         await runContractFunction({
             params,
-            onSuccess: (tx)=>handleTransaction(tx, _txId),
-            onError: (e)=>e.code === -32603 ? error("Transaction doesn't have required number of approvals") : info(e.message)
+            onSuccess: async(tx)=>{
+                await handleTransaction(tx, _txId)
+                await updateBalance()
+            },
+            onError: (e)=>{
+                handleLoading(false)
+                e.code === -32603 ? error("Transaction doesn't have required number of approvals") : info(e.message)
+            }
         })
     }
     const handleRevoke = async (_txId)=>{
+        handleLoading(true)
         const params = {...walletFunctionParams, functionName: "revoke", params: {_txId}}
         await runContractFunction({
             params,
-            onSuccess: (tx)=>handleTransaction(tx, _txId),
-            onError: (e)=>error(e.message)
+            onSuccess: async(tx)=>{await handleTransaction(tx, _txId)},
+            onError: (e)=>{
+                handleLoading(false)
+                error(e.message)
+            }
         })
     }
     const handleApprove = async (_txId)=>{
+        handleLoading(true)
         const params = {...walletFunctionParams, functionName: "approve", params: {_txId}}
-        
         await runContractFunction({
             params,
-            onSuccess: (tx)=>handleTransaction(tx, _txId),
-            onError: (e)=>error(e.message)
+            onSuccess: async(tx)=>await handleTransaction(tx, _txId),
+            onError: (e)=>{
+                handleLoading(false)
+                error(e.message)
+            }
         })
     }
 
-    const handleTransaction = async (tx, _txId)=>{
+    async function handleTransaction(tx, _txId){
         if(tx){
             await tx.wait(1)
         }
@@ -108,32 +120,45 @@ const Transactions = ({walletAddress, submitted}) => {
 
         const updatedTransactions = [...transactions]
         updatedTransactions[_txId] = transaction
-
+        handleLoading(false)
         setTransactions(updatedTransactions)
     }
 
     
-    return ( 
-        <div className="wallet__transactions">
-            {transactions.length ? <h2>Your Transactions</h2> : <h2>No Transactions Yet</h2>}
-            {transactions.length? transactions.map((tx, txId)=>(
-                <div key={txId} className="transaction">
-                    <div>
-                        <span>{!tx.executed ? tx.approvals : requiredApprovals}/{requiredApprovals}</span>
+    return transactions.length ? 
+        (<div className="wallet__transactions">
+            <h2>Wallet Transactions</h2>
+            <div className="transaction">
+                <span className="transactions__header">Approvals</span>
+                <span className="transactions__header">Value</span>
+                <span className="transactions__header">To</span>
+                <span className="transactions__header">Data</span>
+                <span className="transactions__header">States</span>
+            </div>
+            <div className="container scrollable" style={{height: "100%", padding: "10px 0"}}>
+                {transactions.map((tx, txId)=>(
+                    <div key={txId} className="transaction">
+                        <div>
+                            <span>{!tx.executed ? tx.approvals : requiredApprovals}/{requiredApprovals}</span>
+                        </div>
+                        <span>{formatEther(BigNumber.from(tx.value).toString())}</span>
+                        <span>{truncateStr(tx.to, 11)}</span>
+                        <span>{tx.data}</span>
+                        <div className="transaction__status">
+                            {tx.executed && <span className="btn--disabled">Executed</span>
+                            ||
+                            !tx.approved && <span onClick={()=>handleApprove(txId)} className="btn btn--yellow">Approve</span>}
+                            {tx.approved && !tx.executed && <span onClick={()=>handleRevoke(txId)} className="btn">Revoke</span>}
+                            {tx.approvals >= requiredApprovals && !tx.executed && <span onClick={()=>handleExecute(txId)} className="btn btn--yellow">Execute</span>}
+                        </div>
                     </div>
-                    <span>{formatEther(BigNumber.from(tx.value).toString())}</span>
-                    <span>{truncateStr(tx.to, 11)}</span>
-                    <span>{tx.data}</span>
-                    <div className="transaction__status">
-                        {tx.executed && <span>Executed</span>
-                        ||
-                        !tx.approved && <span onClick={()=>handleApprove(txId)} className="btn">Approve</span>}
-                        {tx.approved && !tx.executed && <span onClick={()=>handleRevoke(txId)} className="btn">Revoke</span>}
-                        {tx.approvals >= requiredApprovals && !tx.executed && <span onClick={()=>handleExecute(txId)} className="btn">Execute</span>}
-                    </div>
-                </div>
-            )): null}
+                ))}
+            </div>
         </div>)
+        :
+        <div className="wallet__transactions">
+            <h2 style={{margin: "auto"}}>No Transactions Yet</h2>
+        </div>
 }
  
 export default Transactions;

@@ -43,6 +43,7 @@ img{
 body{
   margin: 0;
   font-family: var(--font-satoshi-regular);
+  /* font-size: 21px; */
 }
 
 input{
@@ -53,6 +54,8 @@ input{
   width: 0;
   flex-grow: 1;
   font-family: var(--font-satoshi-regular);
+  color: var(--color-light-black);
+  font-size: 15px;
 }
 
 input:focus{
@@ -85,6 +88,35 @@ form div{
   display: flex;
 }
 
+/* Scrollable div */
+
+.scrollable{
+  overflow: auto;
+}
+
+/* Works on Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-grey) var(--color-yellow-main);
+}
+
+/* Works on Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 7px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #acaaaa;
+  border-radius: 20px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-yellow-main);
+  border-radius: 20px;
+  /* border: 3px solid ; */
+}
+
+
 /* Text */
 
 .text--yellow{
@@ -95,8 +127,8 @@ form div{
 
 .btn{
   padding: 10px 15px;
-  border: 1px solid black;
-  border-radius: 4px;
+  border: 1px solid var(--color-light-black);
+  border-radius: 5px;
   cursor: pointer;
   font-family: var(--font-satoshi-regular);
   font-size: 16px;
@@ -107,13 +139,25 @@ form div{
 }
 
 .btn--yellow{
-  background: var(--color-yellow-main)
+  background: var(--color-yellow-main);
+  border: none;
+}
+
+.btn--disabled{
+  border-radius: 5px;
+  padding: 10px 15px;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.btn--disabled:hover{
+  cursor: inherit;
 }
 
 .btn--small{
   font-size: 14px;
   padding: 7px 10px;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 /* Icon */
@@ -129,16 +173,33 @@ form div{
   top: 4px;
 }
 
+.icon--small{
+  width: 14px;
+  height: 14px;
+}
+
 .address{
   border: 1px solid var(--color-yellow-main);
   padding: 5px 10px;
   border-radius: 6px;
+  position: relative;
 }
 
 .address:hover{
   cursor: pointer;
   color: var(--color-light-black);
   border: 1px solid var(--color-yellow-light);
+}
+
+.copy-notice{
+  position: absolute;
+  z-index: 1;
+  background: white;
+  width: max-content;
+  border-radius: 10px;
+  padding: 10px;
+  top: 15px;
+  left: 150px;
 }
 
 .header{
@@ -153,8 +214,10 @@ form div{
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh
+  height: 100vh;
 }
+
+
 
 /* Create Wallet */
 
@@ -166,20 +229,26 @@ form div{
   justify-content: center;
   align-items: center;
   border-radius: 10px;
-  row-gap: 70px
+  row-gap: 50px;
+  margin-top: 25px;
+}
+
+.app{
+  display: flex;
+  justify-Content: center;
+  background-color: var(--color-grey);
+  border-radius: 20px;
 }
 
 .wallet{
   margin-top: 20px;
   padding: 25px;
-  width: 450px;
+  width: 700px;
   height: 650px;
-  background-color: var(--color-grey);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  row-gap: 10px;
   border-radius: 12px;
 }
 
@@ -190,16 +259,12 @@ form div{
 }
 
 .wallet__deposit{
-  border: 1px solid var(--color-yellow-main);
+  box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
   padding: 15px;
-  border-radius: 10px
+  border-radius: 10px;
 }
 
 .wallet__submit{
-  margin-top: 40px;
-}
-
-.wallet__transactions{
   margin-top: 40px;
 }
 
@@ -207,17 +272,54 @@ form div{
 /* Wallet__Transcations */
 
 .wallet__transactions{
+  margin-top: 20px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   row-gap: 20px;
-  width: 100%;
+  width: 500px;
+  height: 600px;
+  padding: 20px;
+}
+
+.wallet__transactions .container{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 20px;
+  font-size: 13px;
+  max-height: 100%;
+}
+
+.wallet__transactions .btn, .wallet__transactions .btn--disabled{
+  font-size: 12px;
+  margin: 0px 2px;
 }
 
 .transaction{
   display: grid;
-  grid-template-columns: 5% 15% 25% 15% 40%;
+  grid-template-columns: 15% 15% 16% 20% 34%;
   width: 100%;
   justify-items: center;
+  margin: 5px 0;
 }
+
+.transactions__header{
+  font-weight: bold;
+}
+
+
+/* Loading Overlay */
+
+
+.app__overlay{
+  position: absolute;
+  background: rgba(0,0,0, 0.8);
+  width: 100vw;
+  height: 100vh;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+

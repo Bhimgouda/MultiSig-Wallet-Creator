@@ -18,7 +18,7 @@ const handleNetworkSwitch = async (isWeb3Enabled, chainId, web3, CHAIN_ID) => {
       try {
         await web3.provider.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0x7a69" }],
+          params: [{ chainId: "0xaa36a7" }],
         });
       } catch (error) {
         if (error.code === 4902) {

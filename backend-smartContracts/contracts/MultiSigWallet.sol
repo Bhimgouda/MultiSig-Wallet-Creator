@@ -105,7 +105,9 @@ contract MultiSigWallet {
         isNotExecuted(_txId)
     {
         approvals[_txId][msg.sender] = true;
-        if (approvalsCount(_txId) >= requiredApprovals) {}
+        if (approvalsCount(_txId) >= requiredApprovals) {
+            setTimeLock(_txId);
+        }
         emit Approve(msg.sender, _txId);
     }
 
@@ -128,7 +130,6 @@ contract MultiSigWallet {
         (bool success, ) = payable(transaction.to).call{
             value: transaction.value
         }(transaction.data);
-        console.log(address(this).balance);
         require(success, "Tx Failed");
         emit Execute(_txId);
     }

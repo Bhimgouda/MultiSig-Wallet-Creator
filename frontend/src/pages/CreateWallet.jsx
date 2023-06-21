@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { useMoralis, useWeb3Contract } from "react-moralis";
+import { useWeb3Contract } from "react-moralis";
 import { Link, useNavigate } from "react-router-dom";
 import WALLET_FACTORY_ABI from "../constants/walletFactoryAbi.json"
 import WALLET_FACTORY_ADDRESSES from "../constants/walletFactoryAddresses.json"
 import truncateStr from "../utils/truncate";
 import { error } from "../utils/toastWrapper";
 
-const CreateWallet = ({CHAIN_ID}) => {
-  const [owners, setOwners] = useState([""]);
-  const [required, setRequired] = useState(0)
-  const [timelock, setTimelock] = useState(0)
+const CreateWallet = ({CHAIN_ID, handleLoading}) => {
+  const [owners, setOwners] = useState(["", ""]);
+  const [required, setRequired] = useState("")
+  const [timelock, setTimelock] = useState("")
   const [recentWallet, setRecentWallet] = useState("")
   const navigate = useNavigate();
 
   const {runContractFunction: createWallet} = useWeb3Contract({
     contractAddress: WALLET_FACTORY_ADDRESSES[CHAIN_ID],
     abi: WALLET_FACTORY_ABI,
-    params: {_owners: owners, required, timelock},
+    params: {_owners: owners, required, timelock: timelock || 0},
     functionName: "createWallet"
   })
 
@@ -50,16 +50,20 @@ const CreateWallet = ({CHAIN_ID}) => {
   const handleCreateWallet = async (e) => {
     e.preventDefault();
 
-    if(!required)
-      return error("Required Approvals cannot be 0")
+    if(!required || required === "0")
+      return error("Required Approvals cannot be 0 or Empty")
     if (required > owners.length)
       return error("Required Approvals should be less than number of owners");
     if(!owners.every(owner=> owner.length === 42))
-      return error("Invalid owner address")
+      return error("Please Remove Invalid/Empty Owner Addresses")
     
+    handleLoading(true)
     await createWallet({
         onSuccess: handleCreateWalletSuccess,
-        onError: (e)=>error(e.message)
+        onError: (e)=>{
+          handleLoading(false)
+          error(e.message)
+        }
     });
   };
 
@@ -67,6 +71,7 @@ const CreateWallet = ({CHAIN_ID}) => {
     const receipt = await tx.wait(1)
     const walletAddress = receipt.events[0].args.walletAddress
     localStorage.setItem("recentWallet", `${walletAddress}`)
+    handleLoading(false)
     navigate(`/wallet/${walletAddress}`)
   }
   
@@ -83,23 +88,25 @@ const CreateWallet = ({CHAIN_ID}) => {
       <div className="container">
       <h1 style={{marginBottom: "21px"}}>Create <span className="text--yellow">MultiSig</span> Wallet</h1>
       <form className="create-wallet--new" onSubmit={handleCreateWallet}>
-        {owners.map((owner, index) => (
-          <div style={{display: "flex", alignItems: "center"}} key={index}>
-            <input
-              type="text"
-              placeholder="address"
-              value={owner.address}
-              onChange={(e) => handleOwnerChange(index, e.target.value)}
-            />
-            <span className="icon" style={{width: "14px", margin: "7px"}} onClick={addOwners}><img src="/icons/plus.svg" alt="" /></span>
-            <span className="icon" onClick={() => removeOwner(index)}><img src="/icons/minus.svg" alt="" /></span>
-          </div>
-        ))}
+        <div className="scrollable container" style={{display: "flex", flexDirection: "column", alignItems: "center", height: "102px"}}>
+          {owners.map((owner, index) => (
+            <div style={{display: "flex", alignItems: "center"}}  key={index}>
+              <input
+                type="text"
+                placeholder={`address ${index+1}`}
+                value={owner.address}
+                onChange={(e) => handleOwnerChange(index, e.target.value)}
+              />
+              <span className="icon" style={{width: "14px", margin: "7px"}} onClick={addOwners}><img src="/icons/plus.svg" alt="" /></span>
+              <span className="icon" onClick={() => removeOwner(index)}><img src="/icons/minus.svg" alt="" /></span>
+            </div>
+          ))}
+        </div>
         <div>
           <input value={required} onChange={handleRequiredChange} type="number" placeholder="Required Approvals" name="required" id="required" />
         </div>
         <div>
-          <input value={timelock} onChange={handleTimelockChange} type="number" name="timelock" placeholder="Timelock" id="timelock" />
+          <input value={timelock} onChange={handleTimelockChange} type="number" name="timelock" placeholder="Timelock in seconds (optional)" id="timelock" />
         </div>
         <button className="btn btn--yellow">Create New Wallet</button>
       </form>
@@ -115,7 +122,7 @@ const CreateWallet = ({CHAIN_ID}) => {
       
       {recentWallet ? (
         <div className="container">
-          <h3>Your Most Recent Wallet</h3>
+          <h3>Recently Created Wallet</h3>
           <div className="container" style={{ marginTop: "10px",display: "flex", justifyContent: "space-between", alignItems: "center"}}>
             <span>{truncateStr(recentWallet, 21)}</span>
             <Link to={`/wallet/${recentWallet}`}>

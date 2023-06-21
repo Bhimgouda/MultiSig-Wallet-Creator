@@ -30,6 +30,7 @@ module.exports = async ({getNamedAccounts, deployments}) => {
     if(!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY){
     log("Verifying...")
     await verify(MultiSigFactory.address);
+    await verify(MultiSigWallet.address, args)
     }
     log("--------------------------------------")
 }

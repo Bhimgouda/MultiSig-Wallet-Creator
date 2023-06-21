@@ -1,14 +1,13 @@
-import { useMoralis, useWeb3Contract } from "react-moralis";
+import { useWeb3Contract } from "react-moralis";
 import {ethers, parseEther} from "ethers"
 import MULTI_SIG_WALLET_ABI from "../constants/walletAbi.json"
 import { useState } from "react";
-import { toast } from "react-hot-toast";
 import { error, info, success } from "../utils/toastWrapper";
 
-const Sumbit = ({walletAddress, handleSubmitted}) => {
+const Submit = ({walletAddress, handleSubmitted, handleLoading}) => {
     const [isContract, setIsContract] = useState();
     const [address, setAddress] = useState("");
-    const [value, setValue] = useState(0);
+    const [value, setValue] = useState("");
     const [callData, setCallData] = useState("0x");
 
     const onAddressChange = async(e)=>{
@@ -16,11 +15,16 @@ const Sumbit = ({walletAddress, handleSubmitted}) => {
         setAddress(address)
 
         if(address.length !== 42) return;
-        const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/"); // changes on production
-        const code = await provider.getCode(address)
-        
-        if(code === "0x") setIsContract(false)
-        else setIsContract(true)
+        try{
+            const provider = new ethers.JsonRpcProvider("https://eth-sepolia.g.alchemy.com/v2/NU-UqlzGIQ-MfsZXjzcdhNAbYCCrw3Ip"); // changes on production
+            const code = await provider.getCode(address)
+            
+            if(code === "0x") setIsContract(false)
+            else setIsContract(true)
+        }
+        catch(e){
+            error("Please Enter a Valid Address")
+        }
     }
 
     const handleValueChange = (e)=>{
@@ -44,9 +48,14 @@ const Sumbit = ({walletAddress, handleSubmitted}) => {
 
     const handleSubmitTransaction = async(e)=>{
         e.preventDefault()
+        if(!isContract && !value || value === "0") return error("Invalid Transaction Value")
+        handleLoading(true)
         await submitTransaction({
             onSuccess: handleSubmitSuccess,
-            onError: (e)=>console.log(e)
+            onError: (e)=>{
+                error(e.message)
+                handleLoading(false)
+            }
         })
     }
 
@@ -55,13 +64,17 @@ const Sumbit = ({walletAddress, handleSubmitted}) => {
         const receipt = await tx.wait(1)
         const txId = parseInt(receipt.events[0].args.txId)
         success(`Your Transcation is submitted with TxId - ${txId}`)
+        setAddress("")
+        setValue("")
+        setCallData("0x")
         handleSubmitted(txId)
     }
 
     return ( 
         <div className="wallet__submit container">
             <form className="container" onSubmit={handleSubmitTransaction}>
-                {/* <div>
+            <h2 style={{textAlign: "center"}}>Submit A New Transaction</h2>
+                <div>
                     <input placeholder="address" value={address} onChange={onAddressChange} name="address" type="text"/>
                 </div>
                 <div>
@@ -73,11 +86,11 @@ const Sumbit = ({walletAddress, handleSubmitted}) => {
                     </div>
                     :
                     null
-                } */}
+                }
                 <button className="btn btn--full btn--yellow">Submit</button>
             </form>
         </div>
     );
 }
  
-export default Sumbit;
+export default Submit;
