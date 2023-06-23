@@ -22,22 +22,22 @@ const Wallet = ({CHAIN_ID, handleLoading}) => {
     const [balance, setBalance] = useState(0)
     const [isHovered, setIsHovered] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
-  
-    
     
     const navigate = useNavigate()
     const {address: walletAddress}= useParams()
-    
-    const {runContractFunction: getBalance} = useWeb3Contract({
-        abi: MULTI_SIG_WALLET_ABI,
-        contractAddress: walletAddress,
-        functionName: "getBalance",
-    })
-    
-    const gettingBalance = async() =>{
-        const balance = formatEther(BigNumber.from(await getBalance()).toString())
-        setBalance(balance)
-        handleLoading(false)
+
+    console.log(walletAddress)
+
+    const {runContractFunction} = useWeb3Contract()
+
+    const walletFunctionParams = {
+      contractAddress: walletAddress,
+      abi: MULTI_SIG_WALLET_ABI,
+    }
+
+    const createWalletFunctionParams = {
+      contractAddress: WALLET_FACTORY_ADDRESSES[CHAIN_ID],
+      abi: WALLET_FACTORY_ABI,
     }
     
     const handleSubmitted = (txID)=>{
@@ -68,65 +68,61 @@ const Wallet = ({CHAIN_ID, handleLoading}) => {
         }, 500);
     };
     
-
-    const {runContractFunction: walletExists} = useWeb3Contract({
-        contractAddress: WALLET_FACTORY_ADDRESSES[CHAIN_ID],
-        abi: WALLET_FACTORY_ABI,
-        functionName: "walletExists",
-        params: {
-            walletAddress: walletAddress
-        }
-    }) 
-
-    const {runContractFunction: getOwners} = useWeb3Contract({
-        abi: MULTI_SIG_WALLET_ABI,
-        contractAddress: walletAddress,
-        functionName: "getOwners",
-    })
-    
     useEffect(()=>{
-
         if(walletAddress.length !== 42) {
-            console.log("Invalid URL Path")
+            error("Invalid URL Path")
             return navigate("/")
         }
 
         checkWalletExists()
 
-        gettingOwners()
-
-        gettingBalance()
-
     }, [account, isWalletOwner])
 
     const checkWalletExists = async()=>{
         handleLoading(true)
-        await walletExists({
+        await runContractFunction({
+            params: {...createWalletFunctionParams, functionName: "walletExists", params: {walletAddress: walletAddress}},
             onSuccess: (data)=>{
                 if(!data){
                     error("MultiSig Wallet doesn't exist with US")
                     return navigate("/")
                 }
+                else {
+                  gettingOwners()
+                }
             },
             onError: (e)=> {
-                error(e.message)
+                error(e.error?.message || e.message)
                 return navigate("/")
             }
         })
     }
 
     async function gettingOwners(){
-        await getOwners({
+        await runContractFunction({
+          params: {...walletFunctionParams, functionName: "getOwners"},
           onSuccess: (data)=>{
             data = data.map(walletAddress=>walletAddress.toLowerCase())
             setOwners(data)
             if(data.includes(account.toLowerCase())){
               setIsWalletOwner(true)
+              gettingBalance()
             }
             else setIsWalletOwner(false)
           },
-          onError: (e)=>error(e.message)
+          onError: (e)=>{
+            error(e.error?.message || e.message)
+          }
         })
+    }
+
+    const gettingBalance = async() =>{
+      const balance = formatEther(BigNumber.from(await runContractFunction({
+        params: {...walletFunctionParams, functionName: "getBalance"},
+        onError: (e)=>error(e.error?.message || e.message)
+      })).toString())
+      setBalance(balance)
+      handleLoading(false)
     }
 
     return (

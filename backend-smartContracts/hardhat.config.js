@@ -73,7 +73,7 @@ module.exports = {
   etherscan: {
     apiKey: {
       sepolia: ETHERSCAN_API_KEY,
-      polgon: POLYGONSCAN_API_KEY
+      polygon: POLYGONSCAN_API_KEY
     }
   },
   gasReporter: {

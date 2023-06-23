@@ -124,6 +124,11 @@ contract MultiSigWallet {
             "Timelock has not ended"
         );
 
+        require(
+            transactions[_txId].value <= address(this).balance,
+            "Insufficient Wallet balance"
+        );
+
         Transaction storage transaction = transactions[_txId];
         transaction.executed = true;
 
@@ -169,6 +174,10 @@ contract MultiSigWallet {
 
     function getTimeLock() external view returns (uint256) {
         return timelock;
+    }
+
+    function getTimeToEndLock(uint256 _txId) external view returns (uint256) {
+        return timeToEndLock[_txId];
     }
 
     function getBalance() public view returns (uint) {

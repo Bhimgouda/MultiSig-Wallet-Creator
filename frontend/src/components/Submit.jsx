@@ -10,13 +10,20 @@ const Submit = ({walletAddress, handleSubmitted, handleLoading}) => {
     const [value, setValue] = useState("");
     const [callData, setCallData] = useState("0x");
 
+    const {runContractFunction} = useWeb3Contract()
+
+    const walletFunctionParams = {
+      contractAddress: walletAddress,
+      abi: MULTI_SIG_WALLET_ABI,
+    }
+
     const onAddressChange = async(e)=>{
         const address = e.target.value;
         setAddress(address)
 
         if(address.length !== 42) return;
         try{
-            const provider = new ethers.JsonRpcProvider("https://eth-sepolia.g.alchemy.com/v2/NU-UqlzGIQ-MfsZXjzcdhNAbYCCrw3Ip"); // changes on production
+            const provider = new ethers.JsonRpcProvider("https://polygon-mainnet.g.alchemy.com/v2/v5bVu3LW84m1q_CxAJLw2yW-qZKad2p4"); // changes on production
             const code = await provider.getCode(address)
             
             if(code === "0x") setIsContract(false)
@@ -35,22 +42,18 @@ const Submit = ({walletAddress, handleSubmitted, handleLoading}) => {
         setCallData(e.target.value)
     }
 
-    const {runContractFunction: submitTransaction} = useWeb3Contract({
-        contractAddress: walletAddress,
-        abi: MULTI_SIG_WALLET_ABI,
-        functionName: "submit",
-        params: {
-            _to: address,
-            value: parseEther(value.toString() || "0"),
-            _data: callData
-        }
-    })
-
     const handleSubmitTransaction = async(e)=>{
         e.preventDefault()
         if(!isContract && !value || value === "0") return error("Invalid Transaction Value")
         handleLoading(true)
-        await submitTransaction({
+        await runContractFunction({
+            params: {...walletFunctionParams,functionName: "submit", 
+                params: {
+                    _to: address,
+                    value: parseEther(value.toString() || "0"),
+                    _data: callData
+               }
+            },
             onSuccess: handleSubmitSuccess,
             onError: (e)=>{
                 error(e.message)
@@ -63,7 +66,7 @@ const Submit = ({walletAddress, handleSubmitted, handleLoading}) => {
         info("Submitting Your Transaction")
         const receipt = await tx.wait(1)
         const txId = parseInt(receipt.events[0].args.txId)
-        success(`Your Transcation is submitted with TxId - ${txId}`)
+        success(`Transcation submitted with Txn Id - ${txId}`)
         setAddress("")
         setValue("")
         setCallData("0x")

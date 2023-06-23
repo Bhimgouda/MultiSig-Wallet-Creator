@@ -53,7 +53,7 @@ const Transactions = ({walletAddress, submitted, handleLoading, updateBalance, b
         const params = {...walletFunctionParams, functionName: "checkIfApproved", params:{_txId}}
         return (await runContractFunction({
             params,
-            onError: (e)=>error(e.message)
+            onError: (e)=>error(e.error?.message || e.message)
         }))
     }
 
@@ -68,7 +68,6 @@ const Transactions = ({walletAddress, submitted, handleLoading, updateBalance, b
 
     const handleExecute = async (_txId)=>{
         const params = {...walletFunctionParams, functionName: "execute", params: {_txId}}
-        if(balance < formatEther(BigNumber.from(transactions[_txId].value).toString())) return error('Insufficient balance in your multi-sig wallet')
         handleLoading(true)
         await runContractFunction({
             params,
@@ -78,7 +77,7 @@ const Transactions = ({walletAddress, submitted, handleLoading, updateBalance, b
             },
             onError: (e)=>{
                 handleLoading(false)
-                e.code === -32603 ? error("Transaction doesn't have required number of approvals") : info(e.message)
+                error(e.error?.message || e.error?.message || e.message)
             }
         })
     }
@@ -90,7 +89,7 @@ const Transactions = ({walletAddress, submitted, handleLoading, updateBalance, b
             onSuccess: async(tx)=>{await handleTransaction(tx, _txId)},
             onError: (e)=>{
                 handleLoading(false)
-                error(e.message)
+                error(e.error?.message || e.message)
             }
         })
     }
@@ -102,7 +101,7 @@ const Transactions = ({walletAddress, submitted, handleLoading, updateBalance, b
             onSuccess: async(tx)=>await handleTransaction(tx, _txId),
             onError: (e)=>{
                 handleLoading(false)
-                error(e.message)
+                error(e.error?.message || e.message)
             }
         })
     }

@@ -11,7 +11,7 @@ import LoadingOverlay from './components/LoadingOverlay';
 
 function App() {
   const {isWeb3Enabled, chainId, web3} = useMoralis()
-  const CHAIN_ID = 11155111;
+  const CHAIN_ID = 137;
   const [loading, setLoading] = useState(false);
 
   const handleLoading = (value)=>{

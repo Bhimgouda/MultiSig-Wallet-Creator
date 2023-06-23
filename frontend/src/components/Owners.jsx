@@ -20,7 +20,7 @@ const Owners = ({owners}) => {
             <h2 style={{textAlign: "center", fontWeight: "lighter", marginBottom: "15px"}}>Owners</h2>
             <div style={{height: "100px"}} className="container scrollable">
                 {owners.map(owner=>(
-                    <p ref={ownerAddressRef} onClick={handleCopyClick} style={{fontSize: "12px", marginBottom: "10px", marginRight: "5px"}} className='address '>
+                    <p key={owner} ref={ownerAddressRef} onClick={handleCopyClick} style={{fontSize: "12px", marginBottom: "10px", marginRight: "5px"}} className='address '>
                         <img className='icon icon--small icon--copy' src="/icons/copy.svg" alt="" />
                         {truncateStr(owner, 28)}
                     </p>

@@ -13,12 +13,12 @@ const CreateWallet = ({CHAIN_ID, handleLoading}) => {
   const [recentWallet, setRecentWallet] = useState("")
   const navigate = useNavigate();
 
-  const {runContractFunction: createWallet} = useWeb3Contract({
+  const {runContractFunction} = useWeb3Contract()
+
+  const createWalletFunctionParams = {
     contractAddress: WALLET_FACTORY_ADDRESSES[CHAIN_ID],
     abi: WALLET_FACTORY_ABI,
-    params: {_owners: owners, required, timelock: timelock || 0},
-    functionName: "createWallet"
-  })
+  }
 
   useEffect(()=>{
     setRecentWallet(localStorage.getItem("recentWallet"));
@@ -58,11 +58,12 @@ const CreateWallet = ({CHAIN_ID, handleLoading}) => {
       return error("Please Remove Invalid/Empty Owner Addresses")
     
     handleLoading(true)
-    await createWallet({
+    await runContractFunction({
+        params: {...createWalletFunctionParams, functionName: "createWallet", params: {_owners: owners, required, timelock: timelock || 0}},
         onSuccess: handleCreateWalletSuccess,
         onError: (e)=>{
           handleLoading(false)
-          error(e.message)
+          error(e.error?.message || e.message)
         }
     });
   };
@@ -90,7 +91,7 @@ const CreateWallet = ({CHAIN_ID, handleLoading}) => {
       <form className="create-wallet--new" onSubmit={handleCreateWallet}>
         <div className="scrollable container" style={{display: "flex", flexDirection: "column", alignItems: "center", height: "102px"}}>
           {owners.map((owner, index) => (
-            <div style={{display: "flex", alignItems: "center"}}  key={index}>
+            <div key={index} style={{display: "flex", alignItems: "center"}}  key={index}>
               <input
                 type="text"
                 placeholder={`address ${index+1}`}

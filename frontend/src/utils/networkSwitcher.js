@@ -18,7 +18,7 @@ const handleNetworkSwitch = async (isWeb3Enabled, chainId, web3, CHAIN_ID) => {
       try {
         await web3.provider.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0xaa36a7" }],
+          params: [{ chainId: "0x89" }],
         });
       } catch (error) {
         if (error.code === 4902) {
@@ -30,11 +30,11 @@ const handleNetworkSwitch = async (isWeb3Enabled, chainId, web3, CHAIN_ID) => {
                   chainId: "0x89",
                   chainName: "Polygon Mainnet",
                   rpcUrls: [
-                    "https://polygon-mainnet.g.alchemy.com/v2/v5bVu3LW84m1q_CxAJLw2yW-qZKad2p4",
+                    "https://polygon-rpc.com/",
                   ],
                   nativeCurrency: {
                     name: "Matic",
-                    symbol: "Matic",
+                    symbol: "MATIC",
                     decimals: 18,
                   },
                   blockExplorerUrls: ["https://polygonscan.com/"],
@@ -42,7 +42,7 @@ const handleNetworkSwitch = async (isWeb3Enabled, chainId, web3, CHAIN_ID) => {
               ],
             });
           } catch (error) {
-            console.log(error);
+            error(error);
           }
         }
       }
