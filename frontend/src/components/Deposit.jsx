@@ -14,6 +14,11 @@ const Deposit = ({walletAddress, handleLoading, balance, updateBalance}) => {
       abi: MULTI_SIG_WALLET_ABI,
     }
 
+    function handleContractError(e){
+        handleLoading(false)
+        error(e.error?.message || e.message)
+    }
+
     const handleDepositChange = (e)=>{
         setDepositValue(e.target.value)
     }
@@ -26,10 +31,7 @@ const Deposit = ({walletAddress, handleLoading, balance, updateBalance}) => {
         await runContractFunction({
             params: {...walletFunctionParams,functionName: "deposit", msgValue: parseEther(`${depositValue || 0}`)},
             onSuccess: handleDepositSuccess,
-            onError: (e)=>{
-                handleLoading(false)
-                error(e.error?.message || e.message)
-            }
+            onError: handleContractError
         })
     }
 

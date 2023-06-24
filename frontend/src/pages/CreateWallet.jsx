@@ -5,6 +5,8 @@ import WALLET_FACTORY_ABI from "../constants/walletFactoryAbi.json"
 import WALLET_FACTORY_ADDRESSES from "../constants/walletFactoryAddresses.json"
 import truncateStr from "../utils/truncate";
 import { error } from "../utils/toastWrapper";
+import { verifyContractOnEtherscan, verifyContractOnPolygon } from "../utils/verifyContract";
+import MULTI_SIG_WALLET_ABI from "../constants/walletAbi.json"
 
 const CreateWallet = ({CHAIN_ID, handleLoading}) => {
   const [owners, setOwners] = useState(["", ""]);
@@ -18,6 +20,11 @@ const CreateWallet = ({CHAIN_ID, handleLoading}) => {
   const createWalletFunctionParams = {
     contractAddress: WALLET_FACTORY_ADDRESSES[CHAIN_ID],
     abi: WALLET_FACTORY_ABI,
+  }
+
+  function handleContractError(e){
+    handleLoading(false)
+    error(e.error?.message || e.message)
   }
 
   useEffect(()=>{
@@ -61,10 +68,7 @@ const CreateWallet = ({CHAIN_ID, handleLoading}) => {
     await runContractFunction({
         params: {...createWalletFunctionParams, functionName: "createWallet", params: {_owners: owners, required, timelock: timelock || 0}},
         onSuccess: handleCreateWalletSuccess,
-        onError: (e)=>{
-          handleLoading(false)
-          error(e.error?.message || e.message)
-        }
+        onError: handleContractError
     });
   };
 
@@ -72,7 +76,7 @@ const CreateWallet = ({CHAIN_ID, handleLoading}) => {
     const receipt = await tx.wait(1)
     const walletAddress = receipt.events[0].args.walletAddress
     localStorage.setItem("recentWallet", `${walletAddress}`)
-    handleLoading(false)
+    await verifyContractOnEtherscan("AR3IWKEHKRQRZNWJUMCWHBKQPAP8FUKY2T", walletAddress, MULTI_SIG_WALLET_ABI) // changes on production
     navigate(`/wallet/${walletAddress}`)
   }
   
@@ -91,7 +95,7 @@ const CreateWallet = ({CHAIN_ID, handleLoading}) => {
       <form className="create-wallet--new" onSubmit={handleCreateWallet}>
         <div className="scrollable container" style={{display: "flex", flexDirection: "column", alignItems: "center", height: "102px"}}>
           {owners.map((owner, index) => (
-            <div key={index} style={{display: "flex", alignItems: "center"}}  key={index}>
+            <div key={index} style={{display: "flex", alignItems: "center"}}>
               <input
                 type="text"
                 placeholder={`address ${index+1}`}

@@ -14,60 +14,35 @@ import { BigNumber } from '@ethersproject/bignumber';
 
 const Wallet = ({CHAIN_ID, handleLoading}) => {
     const {account} = useMoralis()
+
+    const [walletExists, setWalletExists] = useState(false)
     const [isWalletOwner, setIsWalletOwner] = useState();
     const [owners, setOwners] = useState([])
-    // const [submitOpen, setSubmitOpen] = useState(false)
     const [submitted, setSubmitted] = useState();
-    const walletAddressRef = useRef(null);
     const [balance, setBalance] = useState(0)
     const [isHovered, setIsHovered] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
+
+    const walletAddressRef = useRef(null);
     
     const navigate = useNavigate()
     const {address: walletAddress}= useParams()
-
-    console.log(walletAddress)
-
+    
     const {runContractFunction} = useWeb3Contract()
-
     const walletFunctionParams = {
       contractAddress: walletAddress,
       abi: MULTI_SIG_WALLET_ABI,
     }
-
     const createWalletFunctionParams = {
       contractAddress: WALLET_FACTORY_ADDRESSES[CHAIN_ID],
       abi: WALLET_FACTORY_ABI,
     }
-    
-    const handleSubmitted = (txID)=>{
-        setSubmitted(txID);
-    }
-    
-    const handleMouseEnter = () => {
-      setIsHovered(true);
-    };
-  
-    const handleMouseLeave = () => {
-      setIsHovered(false);
-    };
 
-    const handleCopyClick = () => {
-        if (walletAddressRef.current) {
-          const range = document.createRange();
-          range.selectNode(walletAddressRef.current.children[2]);
-          window.getSelection().removeAllRanges();
-          window.getSelection().addRange(range);
-          document.execCommand('copy');
-          window.getSelection().removeAllRanges();
-        }
-        setIsHovered(false)
-        setIsCopied(true);
-        setTimeout(() => {
-          setIsCopied(false);
-        }, 500);
-    };
-    
+    function handleContractError(e){
+        handleLoading(false)
+        error(e.error?.message || e.message)
+    }
+
     useEffect(()=>{
         if(walletAddress.length !== 42) {
             error("Invalid URL Path")
@@ -75,58 +50,97 @@ const Wallet = ({CHAIN_ID, handleLoading}) => {
         }
 
         checkWalletExists()
+    }, [])
+    
+    useEffect(()=>{
+      if(!walletExists) return
 
-    }, [account, isWalletOwner])
+      gettingOwners()
+      gettingBalance()
+
+      handleLoading(false)
+    },[account, walletExists])
 
     const checkWalletExists = async()=>{
-        handleLoading(true)
-        await runContractFunction({
-            params: {...createWalletFunctionParams, functionName: "walletExists", params: {walletAddress: walletAddress}},
-            onSuccess: (data)=>{
-                if(!data){
-                    error("MultiSig Wallet doesn't exist with US")
-                    return navigate("/")
-                }
-                else {
-                  gettingOwners()
-                }
-            },
-            onError: (e)=> {
-                error(e.error?.message || e.message)
-                return navigate("/")
-            }
-        })
+      await runContractFunction({
+          params: {...createWalletFunctionParams, functionName: "walletExists", params: {walletAddress: walletAddress}},
+          onSuccess: (data)=>{
+              if(!data){
+                  handleLoading(false)
+                  error("MultiSig Wallet doesn't exist with US")
+                  return navigate("/")
+              }
+              else{
+                setWalletExists(true)
+              }
+          },
+          onError: (e)=> {
+              handleContractError(e)
+              return navigate("/")
+          }
+      })
     }
 
     async function gettingOwners(){
-        await runContractFunction({
-          params: {...walletFunctionParams, functionName: "getOwners"},
-          onSuccess: (data)=>{
-            data = data.map(walletAddress=>walletAddress.toLowerCase())
-            setOwners(data)
-            if(data.includes(account.toLowerCase())){
-              setIsWalletOwner(true)
-              gettingBalance()
-            }
-            else setIsWalletOwner(false)
-          },
-          onError: (e)=>{
-            error(e.error?.message || e.message)
+      await runContractFunction({
+        params: {...walletFunctionParams, functionName: "getOwners"},
+        onSuccess: (data)=>{
+          data = data.map(walletAddress=>walletAddress.toLowerCase())
+          setOwners(data)
+          if(data.includes(account.toLowerCase())){
+            setIsWalletOwner(true)
           }
-        })
+          else setIsWalletOwner(false)
+        },
+        onError: handleContractError
+      })
     }
 
     const gettingBalance = async() =>{
-      const balance = formatEther(BigNumber.from(await runContractFunction({
+      await runContractFunction({
         params: {...walletFunctionParams, functionName: "getBalance"},
-        onError: (e)=>error(e.error?.message || e.message)
-      })).toString())
-      setBalance(balance)
-      handleLoading(false)
+        onSuccess: (balance)=>{
+          balance = formatEther(BigNumber.from(balance).toString())
+          setBalance(balance)
+        },
+        onError: handleContractError
+      })
     }
 
+    // ------------------------------- UI-UX ---------------------------//
+
+    const handleSubmitted = (txID)=>{
+      setSubmitted(txID);
+  }
+  
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+
+  const handleCopyClick = () => {
+      if (walletAddressRef.current) {
+        const range = document.createRange();
+        range.selectNode(walletAddressRef.current.children[2]);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        document.execCommand('copy');
+        window.getSelection().removeAllRanges();
+      }
+      setIsHovered(false)
+      setIsCopied(true);
+      setTimeout(() => {
+        setIsCopied(false);
+      }, 500);
+  };
+
+  // ------------------------------------------------------------------ //
+
     return (
-        isWalletOwner ? (
+        walletExists && isWalletOwner ? (
           <div className="app">
             <div className="wallet">
               <div>
@@ -151,6 +165,7 @@ const Wallet = ({CHAIN_ID, handleLoading}) => {
                   ) : null}
                 </p>
               </div>
+              <a target="_blank" href={`https://polygonscan.com/address/${walletAddress}`}><p style={{textAlign: "center", marginBottom: "10px"}}><img style={{position: "relative", top:"5px", left: "-5px"}} className='icon' src="/icons/blueTick.svg" alt="" />View verified address on PolygonScan</p></a>
               <div className="container wallet__mid">
                 <Owners handleLoading={handleLoading} owners={owners} />
                 <Deposit
@@ -174,6 +189,7 @@ const Wallet = ({CHAIN_ID, handleLoading}) => {
               updateBalance={gettingBalance}
               submitted={submitted}
               walletAddress={walletAddress}
+              walletExists={walletExists}
             />
           </div>
         ) : (

@@ -6,10 +6,11 @@ import { BigNumber } from "@ethersproject/bignumber";
 import truncateStr from "../utils/truncate";
 import {error, info} from "../utils/toastWrapper"
 
-const Transactions = ({walletAddress, submitted, handleLoading, updateBalance, balance}) => {
+const Transactions = ({walletAddress, submitted, handleLoading, updateBalance}) => {
     const [transactions, setTransactions] = useState([])
-    const {account} = useMoralis()
     const [requiredApprovals, setRequiredApprovals] = useState(0)
+    
+    const {account} = useMoralis()
 
     const {runContractFunction} = useWeb3Contract()
 
@@ -18,10 +19,15 @@ const Transactions = ({walletAddress, submitted, handleLoading, updateBalance, b
         abi: MULTI_SIG_WALLET_ABI,
     }
 
+    function handleContractError(e){
+        handleLoading(false)
+        error(e.error?.message || e.message)
+    }
+
     useEffect(()=>{
         getAllTransactions()
         getRequiredApprovals()
-    },[account, requiredApprovals])
+    },[account])
 
     useEffect(()=>{
         if(submitted === undefined) return
@@ -29,38 +35,44 @@ const Transactions = ({walletAddress, submitted, handleLoading, updateBalance, b
     }, [submitted])
 
     async function getAllTransactions(){
-        const txns = await runContractFunction({
-            params: {...walletFunctionParams, functionName: "getAllTransactions"}
-        }) 
-        const transactions = []
-        for(let txn of txns){
-            if(txn.executed) transactions.push(txn)
-            else{
-                const approved = await checkIfApproved(transactions.length)
-                const approvals = await getApprovalsCount(transactions.length)
-                transactions.push({...txn, approved, approvals})
-            }
-        }
-        setTransactions(transactions)
+        await runContractFunction({
+            params: {...walletFunctionParams, functionName: "getAllTransactions"},
+            onSuccess: async(txns)=>{
+                const transactions = []
+                for(let txn of txns){
+                    if(txn.executed) transactions.push(txn)
+                    else{
+                        const approved = await checkIfApproved(transactions.length)
+                        const approvals = parseInt(await getApprovalsCount(transactions.length))
+                        transactions.push({...txn, approved, approvals})
+                    }
+                }
+                setTransactions(transactions)
+            },
+            onError: handleContractError
+        })
     }
+
     async function getApprovalsCount(_txId){
         const params = {...walletFunctionParams, functionName: "approvalsCount", params:{_txId}}
-        return parseInt(await runContractFunction({
-            params
-        }))
+        return runContractFunction({
+            params,
+            onError: handleContractError
+        })
     }
     async function checkIfApproved(_txId){
         const params = {...walletFunctionParams, functionName: "checkIfApproved", params:{_txId}}
-        return (await runContractFunction({
+        return runContractFunction({
             params,
-            onError: (e)=>error(e.error?.message || e.message)
-        }))
+            onError: handleContractError
+        })
     }
 
     async function getRequiredApprovals(){
         const params = {...walletFunctionParams, functionName: "getRequiredApprovals"}
         const required = parseInt(await runContractFunction({
-            params
+            params,
+            onError: handleContractError
         }))
         setRequiredApprovals(required)
     }
@@ -75,10 +87,7 @@ const Transactions = ({walletAddress, submitted, handleLoading, updateBalance, b
                 await handleTransaction(tx, _txId)
                 await updateBalance()
             },
-            onError: (e)=>{
-                handleLoading(false)
-                error(e.error?.message || e.error?.message || e.message)
-            }
+            onError: handleContractError
         })
     }
     const handleRevoke = async (_txId)=>{
@@ -87,10 +96,7 @@ const Transactions = ({walletAddress, submitted, handleLoading, updateBalance, b
         await runContractFunction({
             params,
             onSuccess: async(tx)=>{await handleTransaction(tx, _txId)},
-            onError: (e)=>{
-                handleLoading(false)
-                error(e.error?.message || e.message)
-            }
+            onError: handleContractError
         })
     }
     const handleApprove = async (_txId)=>{
@@ -99,10 +105,7 @@ const Transactions = ({walletAddress, submitted, handleLoading, updateBalance, b
         await runContractFunction({
             params,
             onSuccess: async(tx)=>await handleTransaction(tx, _txId),
-            onError: (e)=>{
-                handleLoading(false)
-                error(e.error?.message || e.message)
-            }
+            onError: handleContractError
         })
     }
 
@@ -111,7 +114,8 @@ const Transactions = ({walletAddress, submitted, handleLoading, updateBalance, b
             await tx.wait(1)
         }
         let transaction = await runContractFunction({
-            params: {...walletFunctionParams, functionName: "getTransaction", params: {_txId}}
+            params: {...walletFunctionParams, functionName: "getTransaction", params: {_txId}},
+            onError: handleContractError
         })
         const approved = await checkIfApproved(_txId)
         const approvals = await getApprovalsCount(_txId)

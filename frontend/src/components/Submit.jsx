@@ -17,6 +17,11 @@ const Submit = ({walletAddress, handleSubmitted, handleLoading}) => {
       abi: MULTI_SIG_WALLET_ABI,
     }
 
+    function handleContractError(e){
+        handleLoading(false)
+        error(e.error?.message || e.message)
+    }
+
     const onAddressChange = async(e)=>{
         const address = e.target.value;
         setAddress(address)
@@ -55,10 +60,7 @@ const Submit = ({walletAddress, handleSubmitted, handleLoading}) => {
                }
             },
             onSuccess: handleSubmitSuccess,
-            onError: (e)=>{
-                error(e.message)
-                handleLoading(false)
-            }
+            onError: handleContractError
         })
     }
 
