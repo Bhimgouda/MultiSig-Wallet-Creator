@@ -28,7 +28,7 @@ const Submit = ({walletAddress, handleSubmitted, handleLoading}) => {
 
         if(address.length !== 42) return;
         try{
-            const provider = new ethers.JsonRpcProvider("https://polygon-mainnet.g.alchemy.com/v2/v5bVu3LW84m1q_CxAJLw2yW-qZKad2p4"); // changes on production
+            const provider = new ethers.JsonRpcProvider("https://eth-sepolia.g.alchemy.com/v2/NU-UqlzGIQ-MfsZXjzcdhNAbYCCrw3Ip"); // changes on production
             const code = await provider.getCode(address)
             
             if(code === "0x") setIsContract(false)

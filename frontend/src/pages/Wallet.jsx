@@ -101,6 +101,7 @@ const Wallet = ({CHAIN_ID, handleLoading}) => {
         params: {...walletFunctionParams, functionName: "getBalance"},
         onSuccess: (balance)=>{
           balance = formatEther(BigNumber.from(balance).toString())
+          console.log(balance)
           setBalance(balance)
         },
         onError: handleContractError
@@ -165,7 +166,7 @@ const Wallet = ({CHAIN_ID, handleLoading}) => {
                   ) : null}
                 </p>
               </div>
-              <a target="_blank" href={`https://polygonscan.com/address/${walletAddress}`}><p style={{textAlign: "center", marginBottom: "10px"}}><img style={{position: "relative", top:"5px", left: "-5px"}} className='icon' src="/icons/blueTick.svg" alt="" />View verified address on PolygonScan</p></a>
+              <a target="_blank" href={`https://sepolia.etherscan.io/address/${walletAddress}`}><p style={{textAlign: "center", marginBottom: "10px"}}><img style={{position: "relative", top:"5px", left: "-5px"}} className='icon' src="/icons/blueTick.svg" alt="" />View verified address on EtherScan</p></a>
               <div className="container wallet__mid">
                 <Owners handleLoading={handleLoading} owners={owners} />
                 <Deposit

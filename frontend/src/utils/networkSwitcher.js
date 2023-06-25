@@ -1,4 +1,4 @@
-import { success } from "./toastWrapper";
+import { success, error } from "./toastWrapper";
 
 const handleNetworkSwitch = async (isWeb3Enabled, chainId, web3, CHAIN_ID) => {
     // Enable Web3 if not already enabled
@@ -8,7 +8,7 @@ const handleNetworkSwitch = async (isWeb3Enabled, chainId, web3, CHAIN_ID) => {
 
     // Check if the current network is already Polygon
     if (parseInt(chainId) === CHAIN_ID) {
-      success("You're wallet is connected to Polygon network")
+      success("You're wallet is connected to Sepolia network")
       return;
     }
 
@@ -20,29 +20,29 @@ const handleNetworkSwitch = async (isWeb3Enabled, chainId, web3, CHAIN_ID) => {
           method: "wallet_switchEthereumChain",
           params: [{ chainId: "0xaa36a7" }],                 // changes on production
         });
-      } catch (error) {
-        if (error.code === 4902) {
+      } catch (e) {
+        if (e.code === 4902) {
           try {
             await web3.provider.request({
               method: "wallet_addEthereumChain",
               params: [
                 {
-                  chainId: "0x89",
-                  chainName: "Polygon Mainnet",
+                  chainId: "0xaa36a7",
+                  chainName: "Sepolia test network",
                   rpcUrls: [
-                    "https://polygon-rpc.com/",
+                    "https://eth-sepolia.g.alchemy.com/v2/NU-UqlzGIQ-MfsZXjzcdhNAbYCCrw3Ip",
                   ],
                   nativeCurrency: {
-                    name: "Matic",
-                    symbol: "MATIC",
+                    name: "Sepolia Eth",
+                    symbol: "SepoliaETH",
                     decimals: 18,
                   },
-                  blockExplorerUrls: ["https://polygonscan.com/"],
+                  blockExplorerUrls: ["https://sepolia.etherscan.io"],
                 },
               ],
             });
-          } catch (error) {
-            error(error);
+          } catch (e) {
+            return error(e.message);
           }
         }
       }

@@ -36,21 +36,21 @@ const Deposit = ({walletAddress, handleLoading, balance, updateBalance}) => {
     }
 
     async function handleDepositSuccess(tx){
-        success(`Depositing ${depositValue} MATIC`)
+        success(`Depositing ${depositValue} ETH`)
         await tx.wait(1)
         await updateBalance()
         handleLoading(false)
         setDepositValue("")
-        success(`Deposited ${depositValue} MATIC`)
+        success(`Deposited ${depositValue} ETH`)
     }
 
     return ( 
         <div onSubmit={handleDeposit} className="wallet__deposit container">
             <form className="container">
                 <h2 style={{textAlign: "center", fontWeight: "lighter", marginBottom: "10px"}}>Wallet Balance</h2>
-                <h1 style={{marginBottom: "10px"}} className="text--yellow">{balance} MATIC</h1>
+                <h1 style={{marginBottom: "10px"}} className="text--yellow">{balance} ETH</h1>
                 <div>
-                    <input value={depositValue} onChange={handleDepositChange} placeholder="value in MATIC" name="deposit" type="number" />
+                    <input value={depositValue} onChange={handleDepositChange} placeholder="value in ETH" name="deposit" type="number" />
                     <button className="btn btn--small">Deposit</button>
                 </div>
             </form>

@@ -33,7 +33,7 @@ function App() {
             <Route path="/wallet/:address" element={<Wallet CHAIN_ID={CHAIN_ID} handleLoading={handleLoading}/>}/>
             {/* <Route path="*" element={<CreateWallet CHAIN_ID={CHAIN_ID}/>}/> */}
             </Routes>)
-            : <h2 className="notice">Please Switch to Polygon network</h2>
+            : <h2 className="notice">Please Switch to Sepolia Test network</h2>
           :
           <h2 className="notice">Please Connect your Wallet</h2>
       }
