@@ -1,0 +1,1 @@
+(self.webpackChunkmulti_sig_wallet_frontend=self.webpackChunkmulti_sig_wallet_frontend||[]).push([[978],{50522:function(){},66882:function(){}}]);
