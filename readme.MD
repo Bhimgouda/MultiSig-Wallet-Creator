@@ -1,7 +1,7 @@
 # Multi-Sig Wallet Creator
 Create MultiSig wallet Contracts in seconds and collaboratively decide whether a blockchain transaction must go through or not.
 
-[![multi-sig-wallet](./media/multi-sig)](https://www.linkedin.com/posts/bhimgouda-patil-05a254269_solidity-100daysofcode-activity-7079107966322233344-2yvz?utm_source=share&utm_medium=member_desktop)
+[![multi-sig-wallet](./media/multi-sig.png)](https://www.linkedin.com/posts/bhimgouda-patil-05a254269_solidity-100daysofcode-activity-7079107966322233344-2yvz?utm_source=share&utm_medium=member_desktop)
 
 
 [See Live Demo of the dApp](https://www.linkedin.com/posts/bhimgouda-patil-05a254269_solidity-100daysofcode-activity-7079107966322233344-2yvz?utm_source=share&utm_medium=member_desktop)
